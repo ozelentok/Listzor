@@ -30,6 +30,7 @@ class MainForm:
 		self.scrollwindow.add(self.treeview)
 
 		# uses self.notesBuffers
+		self.emptyBuffer = gtk.TextBuffer()
 		self.notesView = gtk.TextView()
 		self.notesView.set_editable(True)
 		self.notesView.set_wrap_mode(gtk.WRAP_WORD)
@@ -41,6 +42,10 @@ class MainForm:
 
 		self.noteVBox = gtk.VBox(False, 0)
 		self.noteVBox.pack_start(gtk.HSeparator(), False, False, 0)
+
+		notesLabel = gtk.Label("Notes")
+		notesLabel.set_alignment(0, 0)
+		self.noteVBox.pack_start(notesLabel, False, False, 0)
 		self.noteVBox.pack_start(self.notesView, True, True, 0)
 		
 		self.tableVBox.pack_start(self.noteVBox, True, True, 0)
@@ -50,7 +55,7 @@ class MainForm:
 
 		self.window.add(self.topVBox)
 		self.window.show_all()
-
+		self.newFile()
 
 	def createMenu(self): 
 		menubar = gtk.MenuBar()
@@ -59,17 +64,18 @@ class MainForm:
 		menu_edit = gtk.Menu()
 		menu_help = gtk.Menu()
 		
+		item_new = gtk.MenuItem('New')
+		item_new.connect('button-press-event', self.newFile)
 		item_open = gtk.MenuItem('Open')
 		item_open.connect('button-press-event', self.openFile)
 		item_save = gtk.MenuItem('Save')
 		item_save.connect('button-press-event', self.saveFile)
 		item_quit = gtk.MenuItem('Quit')
 		item_quit.connect('button-press-event', lambda w, e: gtk.main_quit())
+		menu_file.append(item_new)
 		menu_file.append(item_open)
 		menu_file.append(item_save)
 		menu_file.append(item_quit)
-
-
 
 		item_addItem = gtk.MenuItem('Add Item')
 		item_addItem.connect('button-press-event', self.addRow, menu_edit)
@@ -99,15 +105,16 @@ class MainForm:
 
 		return menubar
 
+	def newFile(self, widget=None, e=None):
+		liststore = gtk.ListStore(str)
+		self.loadData(liststore, [str], ['Name'], [])
+
+
 	def openFile(self, widget, e):
 		fileChooser = gtk.FileChooserDialog('Open a File', self.window,
 				gtk.FILE_CHOOSER_ACTION_OPEN,
 				(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,
 				gtk.STOCK_OPEN, gtk.RESPONSE_OK), None)
-		#if self.currentFile:
-		#	fileChooser.set_current_name(self.currentFile)
-		#else:
-		#	fileChooser.set_current_name("listdb.csv")
 		fileFilter = gtk.FileFilter()
 		fileFilter.set_name('Text Files')
 		fileFilter.add_pattern('*.txt')
@@ -122,7 +129,7 @@ class MainForm:
 		fileParser = FileParser()
 		newListStore, headersType, tableHeaders, rowsNotes = fileParser.parseToTable(fileName)
 		# TODO: add messege box for unsucessful file load
-		if newListStore == None or tableHeaders == None:
+		if newListStore == None:
 			return
 		self.currentFile = fileName
 		self.loadData(newListStore, headersType,
@@ -189,14 +196,14 @@ class MainForm:
 			# column
 			col.set_sort_column_id(i)
 			self.treeview.append_column(col)
-			self.tableHeaders = headers;
-			# notes buffers
-			self.notesBuffers = []
-			for notes in rowsNotes:
-				nbuffer = gtk.TextBuffer()
-				nbuffer.set_text(notes)
-				self.notesBuffers.append(nbuffer)
-			self.liststore = liststore;
+		# notes buffers
+		self.tableHeaders = headers;
+		self.notesBuffers = []
+		for notes in rowsNotes:
+			nbuffer = gtk.TextBuffer()
+			nbuffer.set_text(notes)
+			self.notesBuffers.append(nbuffer)
+		self.liststore = liststore;
 		self.treeview.set_model(self.liststore)
 
 	def addRow(self, widget, e, menu):
@@ -208,7 +215,9 @@ class MainForm:
 		menu.popdown()
 		itemToDel = self.treeSelector.get_selected()[1]
 		if itemToDel != None:
+			index = self.liststore.get_path(itemToDel)[0]
 			self.liststore.remove(itemToDel)
+			del self.notesBuffers[index]
 	def intCellEdited(self, widget, path, text, model, column):
 		model[path][column] = int(text)
 
@@ -226,6 +235,10 @@ class MainForm:
 		if itemIter != None:
 			index = self.liststore.get_path(itemIter)[0]
 			self.notesView.set_buffer(self.notesBuffers[index])		
+			self.notesView.set_property('editable', True)
+		else:
+			self.notesView.set_buffer(self.emptyBuffer)
+			self.notesView.set_property('editable', False)
 
 	def main(self):
 		gtk.main()

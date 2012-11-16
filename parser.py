@@ -57,8 +57,7 @@ class FileParser(object):
 					rowsNotes.append(row[-1])
 				return liststore, dataTypes, tableHeaders, rowsNotes
 
-			except TypeError as e:
-				print "I/O error({0})".format(e)
+			except:
 				print >> sys.stderr, 'File Data is malformed'
 		return None, None, None, None
 
