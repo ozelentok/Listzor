@@ -44,6 +44,7 @@ class FileParser(object):
 				dataTypes = [self.letterTypes[t] for t in dataLetters]
 				liststore = gtk.ListStore(*dataTypes)
 				tableHeaders = dataRows.next()
+				rowsNotes = []
 				for row in dataRows:
 					# row is empty
 					if not row:
@@ -53,14 +54,15 @@ class FileParser(object):
 						val = self.convertValToTableFormat(cellType, row[i])
 						data.append(val)
 					liststore.append(data)
-				return liststore, dataTypes, tableHeaders
+					rowsNotes.append(row[-1])
+				return liststore, dataTypes, tableHeaders, rowsNotes
 
 			except:
 				print >> sys.stderr, 'File Data is malformed'
 		return None, None, None
 
 	# parses data into csv file
-	def parseToFile(self, filePath, liststore, tableHeaders):
+	def parseToFile(self, filePath, liststore, tableHeaders, rowsNotes):
 		with open(filePath, 'w',) as dataFile:
 			csvWriter = csv.writer(dataFile)
 			dataTypes = []
@@ -71,5 +73,7 @@ class FileParser(object):
 			csvWriter.writerow(dataTypes)
 			csvWriter.writerow(tableHeaders)
 
-			for row in liststore:
-				csvWriter.writerow(row)
+			for i, row in enumerate(liststore):
+				ouputRow = [item for item in row]
+				ouputRow.append(rowsNotes[i])
+				csvWriter.writerow(ouputRow)

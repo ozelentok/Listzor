@@ -91,11 +91,11 @@ class MainForm:
 		fileName = fileChooser.get_filename()
 		fileChooser.destroy()
 		fileParser = FileParser()
-		newListStore, headersType, tableHeaders = fileParser.parseToTable(fileName)
+		newListStore, headersType, tableHeaders, rowsNotes = fileParser.parseToTable(fileName)
 		# TODO: add messege box for unsucessful file load
 		if newListStore == None or tableHeaders == None:
 			return
-		self.loadData(newListStore, headersType, tableHeaders)
+		self.loadData(newListStore, headersType, tableHeaders, rowsNotes)
 
 	def saveFile(self, widget, e):
 		fileChooser = gtk.FileChooserDialog('Save File', self.window,
@@ -114,10 +114,10 @@ class MainForm:
 		fileName = fileChooser.get_filename()
 		fileChooser.destroy()
 		fileParser = FileParser()
-		fileParser.parseToFile(fileName, self.liststore, self.tableHeaders)
+		fileParser.parseToFile(fileName, self.liststore, self.tableHeaders, self.rowsNotes)
 
 
-	def loadData(self, liststore, headersType, headers):
+	def loadData(self, liststore, headersType, headers, rowsNotes):
 		# remove old treeview columns
 		for col in self.treeview.get_columns():
 			self.treeview.remove_column(col)
@@ -154,6 +154,7 @@ class MainForm:
 			col.set_sort_column_id(i)
 			self.treeview.append_column(col)
 			self.tableHeaders = headers;
+			self.rowsNotes = rowsNotes
 			self.liststore = liststore;
 		self.treeview.set_model(self.liststore)
 
