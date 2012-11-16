@@ -1,6 +1,4 @@
-#List Manager <br />
-
-#Introduction
+#Listzor - List Manager <br />
 Listzor - a list manager for windows and linux <br />
 Programmed in Python and GTK+
 
