@@ -20,7 +20,7 @@ class FileParser(object):
 		 		,gobject.TYPE_STRING: 's', gobject.TYPE_BOOLEAN: 'b'}
 
 	def convertValToTableFormat(self, cellType, val):
-		if cellType == 'd':
+		if cellType == 'f':
 			return float(val)
 		elif cellType == 'i':
 			return int(val)
@@ -57,9 +57,10 @@ class FileParser(object):
 					rowsNotes.append(row[-1])
 				return liststore, dataTypes, tableHeaders, rowsNotes
 
-			except:
+			except TypeError as e:
+				print "I/O error({0})".format(e)
 				print >> sys.stderr, 'File Data is malformed'
-		return None, None, None
+		return None, None, None, None
 
 	# parses data into csv file
 	def parseToFile(self, filePath, liststore, tableHeaders, rowsNotes):

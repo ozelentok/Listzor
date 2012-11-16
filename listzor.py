@@ -17,6 +17,8 @@ class MainForm:
 		self.window.connect('delete_event', lambda w, e: gtk.main_quit())
 		self.window.set_default_size(500, 300)
 
+		self.currentFile = None
+
 		self.treeview = gtk.TreeView()
 		self.treeSelector = self.treeview.get_selection()
 		self.treeSelector.connect('changed', self.rowChange)
@@ -96,6 +98,10 @@ class MainForm:
 				gtk.FILE_CHOOSER_ACTION_OPEN,
 				(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,
 				gtk.STOCK_OPEN, gtk.RESPONSE_OK), None)
+		#if self.currentFile:
+		#	fileChooser.set_current_name(self.currentFile)
+		#else:
+		#	fileChooser.set_current_name("listdb.csv")
 		fileFilter = gtk.FileFilter()
 		fileFilter.set_name('Text Files')
 		fileFilter.add_pattern('*.txt')
@@ -112,6 +118,7 @@ class MainForm:
 		# TODO: add messege box for unsucessful file load
 		if newListStore == None or tableHeaders == None:
 			return
+		self.currentFile = fileName
 		self.loadData(newListStore, headersType,
 					tableHeaders, rowsNotes)
 
