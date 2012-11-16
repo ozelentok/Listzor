@@ -16,20 +16,37 @@ class MainForm:
 		self.window.set_title('Listzor')
 		self.window.connect('delete_event', lambda w, e: gtk.main_quit())
 		self.window.set_default_size(500, 300)
-		self.treeview = gtk.TreeView()
 
-		self.treeview.set_reorderable(True)
+		self.treeview = gtk.TreeView()
+		self.treeSelector = self.treeview.get_selection()
+		self.treeSelector.connect('changed', self.rowChange)
+
 		self.scrollwindow = gtk.ScrolledWindow(
 			self.treeview.get_vadjustment(),
 			self.treeview.get_hadjustment())
 		self.scrollwindow.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
 		self.scrollwindow.add(self.treeview)
 
-		self.vbox = gtk.VBox(False, 0)
-		self.vbox.pack_start(self.createMenu(), False, False, 0)
-		self.vbox.pack_start(self.scrollwindow, True, True, 0)
-				
-		self.window.add(self.vbox)
+		# uses self.notesBuffers
+		self.notesView = gtk.TextView()
+		self.notesView.set_editable(True)
+		self.notesView.set_wrap_mode(gtk.WRAP_WORD)
+
+		self.topVBox = gtk.VBox(False, 0)
+
+		self.tableVBox = gtk.VBox(True, 0)
+		self.tableVBox.pack_start(self.scrollwindow, True, True, 0)
+
+		self.noteVBox = gtk.VBox(False, 0)
+		self.noteVBox.pack_start(gtk.HSeparator(), False, False, 0)
+		self.noteVBox.pack_start(self.notesView, True, True, 0)
+		
+		self.tableVBox.pack_start(self.noteVBox, True, True, 0)
+
+		self.topVBox.pack_start(self.createMenu(), False, False, 0)
+		self.topVBox.pack_start(self.tableVBox, True, True, 0)
+
+		self.window.add(self.topVBox)
 		self.window.show_all()
 
 
@@ -95,7 +112,8 @@ class MainForm:
 		# TODO: add messege box for unsucessful file load
 		if newListStore == None or tableHeaders == None:
 			return
-		self.loadData(newListStore, headersType, tableHeaders, rowsNotes)
+		self.loadData(newListStore, headersType,
+					tableHeaders, rowsNotes)
 
 	def saveFile(self, widget, e):
 		fileChooser = gtk.FileChooserDialog('Save File', self.window,
@@ -114,7 +132,12 @@ class MainForm:
 		fileName = fileChooser.get_filename()
 		fileChooser.destroy()
 		fileParser = FileParser()
-		fileParser.parseToFile(fileName, self.liststore, self.tableHeaders, self.rowsNotes)
+		rowNotes = []
+		for nbuffer in self.notesBuffers:
+			startIter = nbuffer.get_start_iter()
+			endIter = nbuffer.get_end_iter()
+			rowNotes.append(nbuffer.get_text(startIter, endIter))
+		fileParser.parseToFile(fileName, self.liststore, self.tableHeaders, rowNotes)
 
 
 	def loadData(self, liststore, headersType, headers, rowsNotes):
@@ -154,7 +177,12 @@ class MainForm:
 			col.set_sort_column_id(i)
 			self.treeview.append_column(col)
 			self.tableHeaders = headers;
-			self.rowsNotes = rowsNotes
+			# notes buffers
+			self.notesBuffers = []
+			for notes in rowsNotes:
+				nbuffer = gtk.TextBuffer()
+				nbuffer.set_text(notes)
+				self.notesBuffers.append(nbuffer)
 			self.liststore = liststore;
 		self.treeview.set_model(self.liststore)
 
@@ -169,6 +197,12 @@ class MainForm:
 
 	def textCellEdited(self, widget, path, text, model, column):
 		model[path][column] = text
+
+	def rowChange(self, widget):
+		itemIter = widget.get_selected()[1]
+		if itemIter != None:
+			index = self.liststore.get_path(itemIter)[0]
+			self.notesView.set_buffer(self.notesBuffers[index])		
 
 	def main(self):
 		gtk.main()
