@@ -7,12 +7,13 @@
 import pygtk
 pygtk.require('2.0')
 import gtk
+import ast
 from parser import FileParser
 
 class MainForm:
 	def __init__(self):
 		self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
-		self.window.set_title("Listzor")
+		self.window.set_title('Listzor')
 		self.window.connect('delete_event', lambda w, e: gtk.main_quit())
 		self.window.set_default_size(500, 300)
 		self.treeview = gtk.TreeView()
@@ -39,29 +40,29 @@ class MainForm:
 		menu_edit = gtk.Menu()
 		menu_help = gtk.Menu()
 		
-		item_open = gtk.MenuItem("Open")
+		item_open = gtk.MenuItem('Open')
 		item_open.connect('button-press-event', self.openFile)
-		item_save = gtk.MenuItem("Save")
+		item_save = gtk.MenuItem('Save')
 		item_save.connect('button-press-event', self.saveFile)
-		item_quit = gtk.MenuItem("Quit")
+		item_quit = gtk.MenuItem('Quit')
 		item_quit.connect('button-press-event', lambda w, e: gtk.main_quit())
 		menu_file.append(item_open)
 		menu_file.append(item_save)
 		menu_file.append(item_quit)
 
-		item_cut = gtk.MenuItem("Cut")
-		item_copy = gtk.MenuItem("Copy")
-		item_paste = gtk.MenuItem("Paste")
+		item_cut = gtk.MenuItem('Cut')
+		item_copy = gtk.MenuItem('Copy')
+		item_paste = gtk.MenuItem('Paste')
 		menu_edit.append(item_cut)
 		menu_edit.append(item_copy)
 		menu_edit.append(item_paste)
 		
-		item_about = gtk.MenuItem("About")
+		item_about = gtk.MenuItem('About')
 		menu_help.append(item_about)
 		
-		item_file = gtk.MenuItem("File")
-		item_edit = gtk.MenuItem("Edit")
-		item_help = gtk.MenuItem("Help")
+		item_file = gtk.MenuItem('File')
+		item_edit = gtk.MenuItem('Edit')
+		item_help = gtk.MenuItem('Help')
 		
 		item_file.set_submenu(menu_file)
 		item_edit.set_submenu(menu_edit)
@@ -74,7 +75,7 @@ class MainForm:
 		return menubar
 
 	def openFile(self, widget, e):
-		fileChooser = gtk.FileChooserDialog("Open a File", self.window,
+		fileChooser = gtk.FileChooserDialog('Open a File', self.window,
 				gtk.FILE_CHOOSER_ACTION_OPEN,
 				(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,
 				gtk.STOCK_OPEN, gtk.RESPONSE_OK), None)
@@ -90,16 +91,14 @@ class MainForm:
 		fileName = fileChooser.get_filename()
 		fileChooser.destroy()
 		fileParser = FileParser()
-		newListStore, tableHeaders = fileParser.parseToTable(fileName)
-
+		newListStore, headersType, tableHeaders = fileParser.parseToTable(fileName)
 		# TODO: add messege box for unsucessful file load
 		if newListStore == None or tableHeaders == None:
 			return
-
-		self.loadData(newListStore, tableHeaders)
+		self.loadData(newListStore, headersType, tableHeaders)
 
 	def saveFile(self, widget, e):
-		fileChooser = gtk.FileChooserDialog("Save File", self.window,
+		fileChooser = gtk.FileChooserDialog('Save File', self.window,
 				gtk.FILE_CHOOSER_ACTION_SAVE,
 				(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,
 				gtk.STOCK_SAVE, gtk.RESPONSE_OK), None)
@@ -115,36 +114,65 @@ class MainForm:
 		fileName = fileChooser.get_filename()
 		fileChooser.destroy()
 		fileParser = FileParser()
+		fileParser.parseToFile(fileName, self.liststore, self.tableHeaders)
 
 
-	def loadData(self, liststore, tableHeaders):
-
+	def loadData(self, liststore, headersType, headers):
 		# remove old treeview columns
 		for col in self.treeview.get_columns():
 			self.treeview.remove_column(col)
-
 		# add new treeview columns
-		for i, header in enumerate(tableHeaders):
+		for i, header in enumerate(headers):
 			# cell
-			cell = gtk.CellRendererText()
-			cell.set_property("editable", True)
-			cell.connect("edited", self.cell_edited, liststore, i)
+			if headersType[i] == int:
+				cell = gtk.CellRendererText()
+				cell.connect('edited', self.intCellEdited,
+						liststore, i)
+			elif headersType[i] == float:
+				cell = gtk.CellRendererText()
+				cell.connect('edited', self.floatCellEdited,
+						liststore, i)
+			elif headersType[i] == bool:
+				cell = gtk.CellRendererToggle()
+				cell.connect('toggled', self.boolCellEdited,
+						liststore, i)
+			else:
+				cell = gtk.CellRendererText()
+				cell.connect('edited', self.textCellEdited,
+						liststore, i)
+
+			if headersType[i] == bool:
+				col = gtk.TreeViewColumn(header, cell, active = i)
+				cell.set_property('activatable', True)
+
+			else:
+				col = gtk.TreeViewColumn(header, cell, text = i)
+				cell.set_property('editable', True)
+				col.set_resizable(True)
+			
 			# column
-			col = gtk.TreeViewColumn(header, cell, text = i)
-			col.set_resizable(True)
 			col.set_sort_column_id(i)
 			self.treeview.append_column(col)
-
+			self.tableHeaders = headers;
 			self.liststore = liststore;
 		self.treeview.set_model(self.liststore)
 
-	def cell_edited(self, widget, path, text, model, column):
+	def intCellEdited(self, widget, path, text, model, column):
+		model[path][column] = int(text)
+
+	def floatCellEdited(self, widget, path, text, model, column):
+		model[path][column] = float(text)
+
+	def boolCellEdited(self, widget, path, model, column):
+		model[path][column] = not model[path][column]
+
+	def textCellEdited(self, widget, path, text, model, column):
 		model[path][column] = text
 
 	def main(self):
 		gtk.main()
 
-if __name__ == "__main__":
+if __name__ == '__main__':
 	mainForm = MainForm()
 	mainForm.main()
 

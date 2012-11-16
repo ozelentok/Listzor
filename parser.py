@@ -53,11 +53,11 @@ class FileParser(object):
 						val = self.convertValToTableFormat(cellType, row[i])
 						data.append(val)
 					liststore.append(data)
-				return liststore, tableHeaders
+				return liststore, dataTypes, tableHeaders
 
 			except:
 				print >> sys.stderr, 'File Data is malformed'
-		return None, None
+		return None, None, None
 
 	# parses data into csv file
 	def parseToFile(self, filePath, liststore, tableHeaders):
