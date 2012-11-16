@@ -20,6 +20,8 @@ class MainForm:
 		self.currentFile = None
 
 		self.treeview = gtk.TreeView()
+		self.treeview.set_property("enable-grid-lines", True)
+		self.treeview.set_property("rules-hint", True)
 		self.treeSelector = self.treeview.get_selection()
 		self.treeSelector.connect('changed', self.rowChange)
 
@@ -194,7 +196,6 @@ class MainForm:
 				col.set_resizable(True)
 			
 			# column
-			col.set_sort_column_id(i)
 			self.treeview.append_column(col)
 		# notes buffers
 		self.tableHeaders = headers;
