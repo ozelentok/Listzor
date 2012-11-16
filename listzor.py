@@ -69,16 +69,22 @@ class MainForm:
 		menu_file.append(item_save)
 		menu_file.append(item_quit)
 
-		item_cut = gtk.MenuItem('Cut')
-		item_copy = gtk.MenuItem('Copy')
-		item_paste = gtk.MenuItem('Paste')
-		menu_edit.append(item_cut)
-		menu_edit.append(item_copy)
-		menu_edit.append(item_paste)
+
+
+		item_addItem = gtk.MenuItem('Add Item')
+		item_addItem.connect('button-press-event', self.addRow, menu_edit)
+		item_addColumn = gtk.MenuItem('Add Column')
+		item_delItem = gtk.MenuItem('Delete Selected Item')
+		item_delItem.connect('button-press-event', self.delRow, menu_edit)
+		item_delColumn = gtk.MenuItem('Delete Column')
+		menu_edit.append(item_addItem)
+		menu_edit.append(item_addColumn)
+		menu_edit.append(item_delItem)
+		menu_edit.append(item_delColumn)
 		
 		item_about = gtk.MenuItem('About')
 		menu_help.append(item_about)
-		
+
 		item_file = gtk.MenuItem('File')
 		item_edit = gtk.MenuItem('Edit')
 		item_help = gtk.MenuItem('Help')
@@ -193,6 +199,16 @@ class MainForm:
 			self.liststore = liststore;
 		self.treeview.set_model(self.liststore)
 
+	def addRow(self, widget, e, menu):
+		menu.popdown()
+		self.liststore.append(None)
+		self.notesBuffers.append(gtk.TextBuffer())
+
+	def delRow(self, widget,e, menu):
+		menu.popdown()
+		itemToDel = self.treeSelector.get_selected()[1]
+		if itemToDel != None:
+			self.liststore.remove(itemToDel)
 	def intCellEdited(self, widget, path, text, model, column):
 		model[path][column] = int(text)
 
