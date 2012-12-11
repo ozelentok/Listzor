@@ -58,7 +58,7 @@ class FileParser(object):
 				return liststore, dataTypes, tableHeaders, rowsNotes
 
 			except:
-				print >> sys.stderr, 'File Data is malformed'
+				print >> sys.stderr, 'File\'s data is malformed'
 		return None, None, None, None
 
 	# parses data into csv file

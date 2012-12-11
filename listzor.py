@@ -130,8 +130,9 @@ class MainForm:
 		fileChooser.destroy()
 		fileParser = FileParser()
 		newListStore, headersType, tableHeaders, rowsNotes = fileParser.parseToTable(fileName)
-		# TODO: add messege box for unsucessful file load
 		if newListStore == None:
+			self.displayErrorPrompt('ERROR! Corrupted File', 'The file: \'' + fileName +
+				'could not be loaded\nFile\'s data is malformed')
 			return
 		self.currentFile = fileName
 		self.loadData(newListStore, headersType,
@@ -206,6 +207,15 @@ class MainForm:
 			self.notesBuffers.append(nbuffer)
 		self.liststore = liststore;
 		self.treeview.set_model(self.liststore)
+
+	def displayErrorPrompt(self, title, message):
+		errorPrompt = gtk.MessageDialog(self.window,
+				gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT,
+				gtk.MESSAGE_ERROR, gtk.BUTTONS_CLOSE,
+				message)
+		errorPrompt.set_title(title)
+		errorPrompt.run();
+		errorPrompt.destroy();
 
 	def addRow(self, widget, e, menu):
 		menu.popdown()
